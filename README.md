@@ -107,3 +107,6 @@ The application follows a layered architecture:
 - Menu systems and user interaction
 - Input validation and error handling
 - Application flow control
+
+#### To run:
+python lib/cli.py
