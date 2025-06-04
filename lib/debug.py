@@ -1,10 +1,8 @@
-#!/usr/bin/env python3
-
 from db.models import User, Category, Transaction, Session
 from helpers import UserHelper, CategoryHelper, TransactionHelper
 
 def test_connection():
-    """Test database connection"""
+
     try:
         session = Session()
         users = session.query(User).count()
@@ -20,28 +18,24 @@ def test_connection():
         return False
 
 def quick_test():
-    """Run basic functionality test"""
+
     print("Testing core functions...")
-    
-    # Test user creation
+
     user, msg = UserHelper.create_user("Test User", "test@test.com", "pass123")
     print(f"User: {msg}")
     
     if user:
-        # Test category
+
         cat, msg = CategoryHelper.create_category("Test Cat", user.id)
         print(f"Category: {msg}")
-        
-        # Test transaction
+
         trans, msg = TransactionHelper.create_transaction(100.0, "income", "Test Income", user.id)
         print(f"Transaction: {msg}")
-        
-        # Cleanup
+
         UserHelper.delete_user(user.id)
         print("Test completed, cleaned up")
 
 def show_stats():
-    """Show database statistics"""
     try:
         session = Session()
         users = session.query(User).all()

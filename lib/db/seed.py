@@ -1,29 +1,15 @@
-#!/usr/bin/env python3
-
 from datetime import datetime, timedelta
 from models import User, Category, Transaction, TransactionType, Session
 
 def seed_database():
-    """Seed the database with sample data for testing"""
-    
     session = Session()
     
     try:
-        # Clear existing data
         session.query(Transaction).delete()
         session.query(Category).delete()
         session.query(User).delete()
         
-        # Create sample users
         user1 = User(
-            name="John Doe",
-            email="john.doe@example.com", 
-            password="password123",
-            created_at=datetime.now() - timedelta(days=30),
-            last_login=datetime.now() - timedelta(hours=2)
-        )
-        
-        user2 = User(
             name="Jane Smith",
             email="jane.smith@example.com",
             password="securepass456",
@@ -150,7 +136,6 @@ def seed_database():
         print(f"Created {len(categories_user1 + categories_user2)} categories")
         print(f"Created {len(transactions_user1 + transactions_user2)} transactions")
         
-        # Display sample user credentials
         print("\n--- Sample User Credentials ---")
         print("User 1:")
         print(f"  Email: {user1.email}")
@@ -164,12 +149,11 @@ def seed_database():
         
     except Exception as e:
         session.rollback()
-        print(f"❌ Error seeding database: {str(e)}")
+        print(f" Error seeding database: {str(e)}")
     finally:
         session.close()
 
 def clear_database():
-    """Clear all data from the database"""
     session = Session()
     
     try:

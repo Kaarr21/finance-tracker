@@ -92,8 +92,6 @@ class Transaction(Base):
             'created_at': self.created_at
         }
 
-# Create tables
 Base.metadata.create_all(engine)
 
-# Session factory
 Session = sessionmaker(bind=engine)

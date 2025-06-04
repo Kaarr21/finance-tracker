@@ -1,293 +1,209 @@
-#!/usr/bin/env python3
+from helpers import UserHelper, CategoryHelper, TransactionHelper, DisplayHelper, get_valid_input, validate_email, validate_transaction_type
 
-import sys
-from datetime import datetime
-from helpers import (
-    UserHelper, CategoryHelper, TransactionHelper,
-    DisplayHelper, get_valid_input, validate_email, validate_transaction_type
-)
+current_user = None
 
-class FinanceTrackerCLI:
-    def __init__(self):
-        self.current_user = None
-        self.is_running = True
+def user_menu():
+    global current_user
+    while True:
+        print("\n=== USER MENU ===")
+        print("1. Create Account")
+        print("2. Log In")
+        print("3. View Account Info")
+        print("4. Find Account User ID")
+        print("5. Delete Account")
+        print("6. Log Out")
+        print("0. Back to Main Menu")
 
-    def display_banner(self):
-        print("PERSONAL FINANCE TRACKER")
+        choice = input("Select an option: ")
 
-    def main_menu(self):
-        while self.is_running:
-            self.display_banner()
-            print("\n1. User Menu\n2. Categories\n3. Transactions\n4. Exit")
-            choice = get_valid_input("Choice (1-4): ")
+        if choice == "1":
+            name = get_valid_input("Enter name: ")
+            email = get_valid_input("Enter email: ", validation_func=validate_email)
+            password = get_valid_input("Enter password: ")
+            user, msg = UserHelper.create_user(name, email, password)
+            print(msg)
+            if user:
+                current_user = user
 
-            if choice == "1":
-                self.user_menu()
-            elif choice == "2" and self.check_logged_in():
-                self.category_menu()
-            elif choice == "3" and self.check_logged_in():
-                self.transactions_menu()
-            elif choice == "4":
-                self.exit_app()
+        elif choice == "2":
+            email = get_valid_input("Enter email: ")
+            password = get_valid_input("Enter password: ")
+            user, msg = UserHelper.login_user(email, password)
+            print(msg)
+            if user:
+                current_user = user
+
+        elif choice == "3":
+            if current_user:
+                DisplayHelper.display_user_info(current_user)
             else:
-                print("Invalid choice.")
+                print("You need to log in first.")
 
-    def user_menu(self):
-        while True:
-            print("\n--- USER MENU ---")
-            if not self.current_user:
-                print("1. Create Account\n2. Login\n3. Back")
-                choice = get_valid_input("Choice (1-3): ")
+        elif choice == "4":
+            if current_user:
+                print(f"Your User ID: {current_user.user_id}")
+            else:
+                print("You need to log in first.")
 
-                if choice == "1":
-                    self.create_account()
-                elif choice == "2":
-                    self.login()
-                elif choice == "3":
-                    break
+        elif choice == "5":
+            if current_user:
+                confirm = input("Are you sure you want to delete your account? (yes/no): ")
+                if confirm.lower() == "yes":
+                    success, msg = UserHelper.delete_user(current_user.user_id)
+                    print(msg)
+                    if success:
+                        current_user = None
+            else:
+                print("You need to log in first.")
+
+        elif choice == "6":
+            current_user = None
+            print("Logged out.")
+
+        elif choice == "0":
+            break
+        else:
+            print("Invalid choice.")
+
+def category_menu():
+    while True:
+        print("\n=== CATEGORY MENU ===")
+        print("1. Create Category")
+        print("2. View All Categories")
+        print("3. Find Category by Name")
+        print("4. Delete Category by Name")
+        print("0. Back to Main Menu")
+
+        choice = input("Select an option: ")
+
+        if choice == "1":
+            if current_user:
+                name = get_valid_input("Enter category name: ")
+                category, msg = CategoryHelper.create_category(name, current_user.user_id)
+                print(msg)
+            else:
+                print("You need to log in first.")
+
+        elif choice == "2":
+            if current_user:
+                categories = CategoryHelper.get_user_categories(current_user.user_id)
+                DisplayHelper.display_categories(categories)
+            else:
+                print("You need to log in first.")
+
+        elif choice == "3":
+            if current_user:
+                name = get_valid_input("Enter category name: ")
+                category = CategoryHelper.find_category_by_name(name, current_user.user_id)
+                if category:
+                    print(f"Found: {category.name}")
                 else:
-                    print("Invalid choice.")
+                    print("Category not found.")
             else:
-                print(f"Welcome, {self.current_user.name}!")
-                print("1. Account Info\n2. User ID\n3. Delete Account\n4. Logout\n5. Back")
-                choice = get_valid_input("Choice (1-5): ")
+                print("You need to log in first.")
 
-                if choice == "1":
-                    DisplayHelper.display_user_info(self.current_user)
-                elif choice == "2":
-                    print(f"Your ID: {self.current_user.user_id}")
-                elif choice == "3" and self.delete_account():
-                    break
-                elif choice == "4":
-                    self.logout()
-                elif choice == "5":
-                    break
+        elif choice == "4":
+            if current_user:
+                name = get_valid_input("Enter category name to delete: ")
+                success, msg = CategoryHelper.delete_category(name, current_user.user_id)
+                print(msg)
+            else:
+                print("You need to log in first.")
+
+        elif choice == "0":
+            break
+        else:
+            print("Invalid choice.")
+
+def transaction_menu():
+    while True:
+        print("\n=== TRANSACTIONS MENU ===")
+        print("1. Create Transaction")
+        print("2. View All Transactions")
+        print("3. Find Transaction by Description")
+        print("4. Delete Transaction")
+        print("5. View Monthly Summary Report")
+        print("6. View Detailed Monthly Report")
+        print("0. Back to Main Menu")
+
+        choice = input("Select an option: ")
+
+        if choice == "1":
+            if current_user:
+                amount = get_valid_input("Enter amount: ", float)
+                transaction_type = get_valid_input("Enter type (income/expense): ", validation_func=validate_transaction_type)
+                description = get_valid_input("Enter description: ")
+                transaction, msg = TransactionHelper.create_transaction(amount, transaction_type, description, current_user.user_id)
+                print(msg)
+            else:
+                print("You need to log in first.")
+
+        elif choice == "2":
+            if current_user:
+                transactions = TransactionHelper.get_user_transactions(current_user.user_id)
+                DisplayHelper.display_transactions(transactions)
+            else:
+                print("You need to log in first.")
+
+        elif choice == "3":
+            if current_user:
+                description = get_valid_input("Enter transaction description: ")
+                transaction = TransactionHelper.find_transaction_by_description(description, current_user.user_id)
+                if transaction:
+                    print(f"Found: ${transaction.amount} - {transaction.description}")
                 else:
-                    print("Invalid choice.")
-
-            input("Press Enter...")
-
-    def create_account(self):
-        print("\n--- CREATE ACCOUNT ---")
-        name = get_valid_input("Name: ")
-        email = get_valid_input("Email: ", validation_func=validate_email)
-        password = get_valid_input("Password: ")
-
-        user, message = UserHelper.create_user(name, email, password)
-        print(f"\n{message}")
-        if user:
-            print(f"Your ID: {user.user_id}")
-            self.current_user = user
-
-    def login(self):
-        print("\n--- LOGIN ---")
-        email = get_valid_input("Email: ")
-        password = get_valid_input("Password: ")
-
-        user, message = UserHelper.login_user(email, password)
-        print(f"\n{message}")
-        if user:
-            self.current_user = user
-
-    def delete_account(self):
-        print("\n⚠️  WARNING: This will delete ALL your data!")
-        confirm = get_valid_input("Type 'DELETE' to confirm: ")
-
-        if confirm == "DELETE":
-            success, message = UserHelper.delete_user(self.current_user.id)
-            print(f"\n{message}")
-            if success:
-                self.current_user = None
-                return True
-        else:
-            print("Cancelled.")
-        return False
-
-    def logout(self):
-        print(f"\nGoodbye, {self.current_user.name}!")
-        self.current_user = None
-
-    def category_menu(self):
-        while True:
-            print("\n--- CATEGORIES ---")
-            print("1. Create\n2. View All\n3. Find\n4. Delete\n5. Back")
-            choice = get_valid_input("Choice (1-5): ")
-
-            if choice == "1":
-                self.create_category()
-            elif choice == "2":
-                self.view_categories()
-            elif choice == "3":
-                self.find_category()
-            elif choice == "4":
-                self.delete_category()
-            elif choice == "5":
-                break
+                    print("Transaction not found.")
             else:
-                print("Invalid choice.")
+                print("You need to log in first.")
 
-            input("Press Enter...")
-
-    def create_category(self):
-        name = get_valid_input("Category name: ")
-        category, message = CategoryHelper.create_category(name, self.current_user.id)
-        print(f"{message}")
-
-    def view_categories(self):
-        categories = CategoryHelper.get_user_categories(self.current_user.id)
-        DisplayHelper.display_categories(categories)
-
-    def find_category(self):
-        name = get_valid_input("Category name: ")
-        category = CategoryHelper.find_category_by_name(name, self.current_user.id)
-        if category:
-            print(f"Found: {category.name}")
-        else:
-            print("Not found.")
-
-    def delete_category(self):
-        categories = CategoryHelper.get_user_categories(self.current_user.id)
-        if not categories:
-            print("No categories to delete.")
-            return
-
-        DisplayHelper.display_categories(categories)
-        name = get_valid_input("Category to delete: ")
-        success, message = CategoryHelper.delete_category(name, self.current_user.id)
-        print(f"{message}")
-
-    def transactions_menu(self):
-        while True:
-            print("\n--- TRANSACTIONS ---")
-            print("1. Create\n2. View All\n3. Find\n4. Search\n5. Edit\n6. Delete\n7. Monthly report\n8. Back")
-            choice = get_valid_input("Choice (1-8): ")
-
-            if choice == "1":
-                self.create_transaction()
-            elif choice == "2":
-                self.view_transactions()
-            elif choice == "3":
-                self.find_transaction()
-            elif choice == "4":
-                self.search_transactions()
-            elif choice == "5":
-                self.edit_transaction()
-            elif choice == "6":
-                self.delete_transaction()
-            elif choice == "7":
-                self.view_monthly_report()
-            elif choice == "8":
-                break
+        elif choice == "4":
+            if current_user:
+                description = get_valid_input("Enter transaction description to delete: ")
+                success, msg = TransactionHelper.delete_transaction(description, current_user.user_id)
+                print(msg)
             else:
-                print("Invalid choice.")
+                print("You need to log in first.")
 
-            input("Press Enter...")
+        elif choice == "5":
+            if current_user:
+                summary = TransactionHelper.get_monthly_report(current_user.user_id)
+                DisplayHelper.display_summary_report(summary)
+            else:
+                print("You need to log in first.")
 
-    def create_transaction(self):
-        amount = get_valid_input("Amount: $", float)
-        trans_type = get_valid_input("Type (income/expense): ", validation_func=validate_transaction_type)
-        description = get_valid_input("Description: ")
+        elif choice == "6":
+            if current_user:
+                report = TransactionHelper.get_detailed_monthly_report(current_user.user_id)
+                DisplayHelper.display_detailed_report(report)
+            else:
+                print("You need to log in first.")
 
-        transaction, message = TransactionHelper.create_transaction(
-            amount, trans_type, description, self.current_user.id
-        )
-        print(f"{message}")
-
-    def view_transactions(self):
-        transactions = TransactionHelper.get_user_transactions(self.current_user.id)
-        DisplayHelper.display_transactions(transactions)
-
-    def find_transaction(self):
-        description = get_valid_input("Description: ")
-        transaction = TransactionHelper.find_transaction_by_description(description, self.current_user.id)
-        if transaction:
-            print(f"Found: ${transaction.amount} - {transaction.description}")
+        elif choice == "0":
+            break
         else:
-            print("Not found.")
-
-    def search_transactions(self):
-        if not self.current_user:
-            print("❌ You must be logged in to search transactions.")
-            return
-
-        print("\n--- Filter Transactions ---")
-        start_date_str = get_valid_input("Start date (YYYY-MM-DD) or leave blank: ")
-        end_date_str = get_valid_input("End date (YYYY-MM-DD) or leave blank: ")
-        min_amount_str = get_valid_input("Minimum amount or leave blank: ")
-        max_amount_str = get_valid_input("Maximum amount or leave blank: ")
-
-        try:
-            start_date = datetime.strptime(start_date_str, "%Y-%m-%d") if start_date_str else None
-            end_date = datetime.strptime(end_date_str, "%Y-%m-%d") if end_date_str else None
-            min_amount = float(min_amount_str) if min_amount_str else None
-            max_amount = float(max_amount_str) if max_amount_str else None
-        except ValueError as ve:
-            print(f"Invalid input: {ve}")
-            return
-
-        transactions = TransactionHelper.search_transactions(
-            self.current_user.id, start_date, end_date, min_amount, max_amount
-        )
-
-        if transactions:
-            DisplayHelper.display_transactions(transactions)
-        else:
-            print("No transactions found matching your filters.")
-
-    def view_monthly_report(self):
-        report = TransactionHelper.get_monthly_report(self.current_user.id)
-        print("\n--- Monthly Report ---")
-        for month, data in report.items():
-            income = data.get("income", 0.0)
-            expense = data.get("expense", 0.0)
-            print(f"{month}: Income = ${income:.2f}, Expense = ${expense:.2f}")
-
-    def edit_transaction(self):
-        transaction_id = int(get_valid_input("Enter Transaction ID to edit: "))
-        field = get_valid_input("Enter field to edit (amount, description, type): ")
-        new_value = get_valid_input(f"Enter new value for {field}: ")
-
-        if field == "amount":
-            new_value = float(new_value)
-
-        updated_transaction, message = TransactionHelper.edit_transaction(
-            transaction_id, self.current_user.id, **{field: new_value}
-        )
-        print(message)
-
-    def delete_transaction(self):
-        transactions = TransactionHelper.get_user_transactions(self.current_user.id)
-        if not transactions:
-            print("No transactions to delete.")
-            return
-
-        DisplayHelper.display_transactions(transactions)
-        description = get_valid_input("Description to delete: ")
-        success, message = TransactionHelper.delete_transaction(description, self.current_user.id)
-        print(f"{'Deleted' if success else 'Not deleted'}: {message}")
-
-    def check_logged_in(self):
-        if not self.current_user:
-            print("❌ Please log in first.")
-            input("Press Enter...")
-            return False
-        return True
-
-    def exit_app(self):
-        print("\nThanks for using Finance Tracker!")
-        self.is_running = False
-        sys.exit(0)
-
-    def run(self):
-        try:
-            self.main_menu()
-        except KeyboardInterrupt:
-            print("\n\nGoodbye!")
-            sys.exit(0)
+            print("Invalid choice.")
 
 def main():
-    app = FinanceTrackerCLI()
-    app.run()
+    while True:
+        print("\n=== MAIN MENU ===")
+        print("1. User Menu")
+        print("2. Category Menu")
+        print("3. My Transactions")
+        print("0. Exit")
 
-if __name__ == "__main__":
+        choice = input("Select an option: ")
+
+        if choice == "1":
+            user_menu()
+        elif choice == "2":
+            category_menu()
+        elif choice == "3":
+            transaction_menu()
+        elif choice == "0":
+            print("Goodbye!")
+            break
+        else:
+            print("Invalid choice.")
+
+if __name__ == '__main__':
     main()
